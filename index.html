@@ -1100,7 +1100,8 @@
         position: relative;
         overflow: hidden;
         cursor: none;
-        transform-style: preserve-3d;
+        transform-style: flat;
+        isolation: isolate;
         transition:
           transform 0.5s cubic-bezier(0.03, 0.98, 0.52, 0.99),
           box-shadow 0.5s;
@@ -1223,35 +1224,39 @@
         position: absolute;
         top: 1.2rem;
         left: 1.2rem;
-        z-index: 3;
+        z-index: 10;
         font-size: 9px;
         letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: rgba(229, 181, 103, 0.6);
+        color: rgba(229, 181, 103, 0.75);
         padding: 5px 10px;
-        border: 1px solid rgba(229, 181, 103, 0.2);
+        border: 1px solid rgba(229, 181, 103, 0.3);
         backdrop-filter: blur(8px);
-        background: rgba(8, 0, 15, 0.45);
+        background: rgba(8, 0, 15, 0.55);
       }
       .pi-btn {
         position: absolute;
         top: 1.2rem;
         right: 1.2rem;
-        z-index: 3;
-        width: 34px;
-        height: 34px;
+        z-index: 10; /* raised above image + overlay */
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        border: 1px solid rgba(229, 181, 103, 0.35);
+        border: 1px solid rgba(229, 181, 103, 0.55);
+        background: rgba(8, 0, 15, 0.6); /* dark backing so arrow is visible */
+        backdrop-filter: blur(6px);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
-        color: var(--g2);
+        font-size: 15px;
+        color: var(--g1); /* bright gold */
+        font-weight: 700;
         opacity: 0;
-        transform: scale(0.65);
+        transform: scale(0.55);
         transition:
-          opacity 0.4s,
-          transform 0.4s;
+          opacity 0.35s,
+          transform 0.35s;
+        pointer-events: none; /* click goes to card, not button */
       }
       .pf-item:hover .pi-btn {
         opacity: 1;
@@ -2308,8 +2313,22 @@
       </div>
       <div class="pf-grid" id="pf-grid">
         <!-- Firebase portfolio cards injected here dynamically -->
-        <div id="pf-loading" style="grid-column:1/-1;text-align:center;padding:4rem 2rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:rgba(229,181,103,.4);letter-spacing:.1em">✦ &nbsp; Loading Portfolio &nbsp; ✦</div>
-            </div>
+        <div
+          id="pf-loading"
+          style="
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 4rem 2rem;
+            font-family: &quot;Cormorant Garamond&quot;, serif;
+            font-style: italic;
+            font-size: 20px;
+            color: rgba(229, 181, 103, 0.4);
+            letter-spacing: 0.1em;
+          "
+        >
+          ✦ &nbsp; Loading Portfolio &nbsp; ✦
+        </div>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════
@@ -2331,7 +2350,7 @@
       >
         <div class="reel-track" id="reel-track">
           <!-- Firebase reel clips injected here -->
-                </div>
+        </div>
       </div>
     </section>
 
@@ -3047,9 +3066,9 @@
             \${item.url
               ? (isVideo
                   ? \`<video src="\${item.url}" class="pi-media-bg" muted loop autoplay playsinline
-                       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;z-index:0"></video>\`
+                       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;z-index:1"></video>\`
                   : \`<img src="\${item.url}" alt="\${item.title}" loading="lazy"
-                       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;z-index:0;filter:saturate(0.7) brightness(0.7) hue-rotate(260deg)">\`)
+                       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.62;z-index:1;filter:saturate(0.75) brightness(0.72) hue-rotate(260deg)">\`)
               : \`<div class="pi-sym">\${icon}</div>\`
             }
             <div class="pi-badge">\${label}</div>
