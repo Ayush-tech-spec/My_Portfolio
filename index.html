@@ -1100,8 +1100,7 @@
         position: relative;
         overflow: hidden;
         cursor: none;
-        transform-style: flat;
-        isolation: isolate;
+        transform-style: preserve-3d;
         transition:
           transform 0.5s cubic-bezier(0.03, 0.98, 0.52, 0.99),
           box-shadow 0.5s;
@@ -1224,39 +1223,35 @@
         position: absolute;
         top: 1.2rem;
         left: 1.2rem;
-        z-index: 10;
+        z-index: 3;
         font-size: 9px;
         letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: rgba(229, 181, 103, 0.75);
+        color: rgba(229, 181, 103, 0.6);
         padding: 5px 10px;
-        border: 1px solid rgba(229, 181, 103, 0.3);
+        border: 1px solid rgba(229, 181, 103, 0.2);
         backdrop-filter: blur(8px);
-        background: rgba(8, 0, 15, 0.55);
+        background: rgba(8, 0, 15, 0.45);
       }
       .pi-btn {
         position: absolute;
         top: 1.2rem;
         right: 1.2rem;
-        z-index: 10; /* raised above image + overlay */
-        width: 36px;
-        height: 36px;
+        z-index: 3;
+        width: 34px;
+        height: 34px;
         border-radius: 50%;
-        border: 1px solid rgba(229, 181, 103, 0.55);
-        background: rgba(8, 0, 15, 0.6); /* dark backing so arrow is visible */
-        backdrop-filter: blur(6px);
+        border: 1px solid rgba(229, 181, 103, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
-        color: var(--g1); /* bright gold */
-        font-weight: 700;
+        font-size: 13px;
+        color: var(--g2);
         opacity: 0;
-        transform: scale(0.55);
+        transform: scale(0.65);
         transition:
-          opacity 0.35s,
-          transform 0.35s;
-        pointer-events: none; /* click goes to card, not button */
+          opacity 0.4s,
+          transform 0.4s;
       }
       .pf-item:hover .pi-btn {
         opacity: 1;
@@ -1993,7 +1988,48 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+    <!-- ARROW FIX — injected override -->
+    <style>
+      /* Force arrow visible on hover — overrides all previous rules */
+      .pi-btn {
+        position: absolute !important;
+        top: 1rem !important;
+        right: 1rem !important;
+        z-index: 999 !important;
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important;
+        border: 1.5px solid #ffd700 !important;
+        background: rgba(8, 0, 15, 0.82) !important;
+        backdrop-filter: blur(6px) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 16px !important;
+        color: #ffd700 !important;
+        font-weight: 700 !important;
+        opacity: 0 !important;
+        /* translateY instead of scale — scale gets clipped by overflow:hidden */
+        transform: translateY(-10px) !important;
+        transition:
+          opacity 0.28s ease,
+          transform 0.28s ease !important;
+        pointer-events: none !important;
+      }
+      .pf-item:hover .pi-btn {
+        opacity: 1 !important;
+        transform: translateY(0px) !important;
+      }
+      /* Badge also needs to be above the overlay */
+      .pi-badge {
+        z-index: 999 !important;
+      }
+      /* pf-item: keep overflow:hidden but give it isolation context */
+      .pf-item {
+        isolation: isolate !important;
+      }
+    </style>
   </head>
   <body>
     <!-- ── SCROLL PROGRESS ── -->
@@ -2312,21 +2348,119 @@
         </div>
       </div>
       <div class="pf-grid" id="pf-grid">
-        <!-- Firebase portfolio cards injected here dynamically -->
+        <!-- 1 wide -->
         <div
-          id="pf-loading"
-          style="
-            grid-column: 1/-1;
-            text-align: center;
-            padding: 4rem 2rem;
-            font-family: &quot;Cormorant Garamond&quot;, serif;
-            font-style: italic;
-            font-size: 20px;
-            color: rgba(229, 181, 103, 0.4);
-            letter-spacing: 0.1em;
-          "
+          class="pf-item w2 pi1"
+          data-c="photo"
+          data-t="Celestial Empress"
+          data-s="Fashion Editorial · 2024"
+          data-ico="👑"
         >
-          ✦ &nbsp; Loading Portfolio &nbsp; ✦
+          <div class="pi-tex"></div>
+          <div class="pi-glow"></div>
+          <div class="pi-sym">👑</div>
+          <div class="pi-badge">Fashion</div>
+          <div class="pi-btn" data-tip="Open">↗</div>
+          <div class="pi-over">
+            <div class="pi-cat">Photography · 2026</div>
+            <div class="pi-title">Celestial Empress</div>
+            <div class="pi-sub">Fashion Editorial</div>
+          </div>
+        </div>
+        <!-- 2 tall -->
+        <div
+          class="pf-item h2 pi2"
+          data-c="film"
+          data-t="The Abyss"
+          data-s="Short Film · Cinematic Edit"
+          data-ico="🎬"
+        >
+          <div class="pi-tex"></div>
+          <div class="pi-glow"></div>
+          <div class="pi-sym">🎬</div>
+          <div class="pi-badge">Short Film</div>
+          <div class="pi-btn" data-tip="Play">▶</div>
+          <div class="pi-over">
+            <div class="pi-cat">Cinematography · 2026</div>
+            <div class="pi-title">The Abyss</div>
+            <div class="pi-sub">Short Film · 8 min</div>
+          </div>
+        </div>
+        <!-- 3 -->
+        <div
+          class="pf-item pi3"
+          data-c="photo"
+          data-t="Violet Throne"
+          data-s="Portrait Editorial"
+          data-ico="🌙"
+        >
+          <div class="pi-tex"></div>
+          <div class="pi-glow"></div>
+          <div class="pi-sym">🌙</div>
+          <div class="pi-badge">Portrait</div>
+          <div class="pi-btn" data-tip="Open">↗</div>
+          <div class="pi-over">
+            <div class="pi-cat">Photography · 2023</div>
+            <div class="pi-title">Violet Throne</div>
+            <div class="pi-sub">Portrait Editorial</div>
+          </div>
+        </div>
+        <!-- 4 -->
+        <div
+          class="pf-item pi4"
+          data-c="content"
+          data-t="Brand Myth"
+          data-s="Campaign · Aurora Studio"
+          data-ico="⚡"
+        >
+          <div class="pi-tex"></div>
+          <div class="pi-glow"></div>
+          <div class="pi-sym">⚡</div>
+          <div class="pi-badge">Campaign</div>
+          <div class="pi-btn" data-tip="Open">↗</div>
+          <div class="pi-over">
+            <div class="pi-cat">Content · 2026</div>
+            <div class="pi-title">Brand Myth</div>
+            <div class="pi-sub">Campaign · Aurora Studio</div>
+          </div>
+        </div>
+        <!-- 5 wide -->
+        <div
+          class="pf-item w2 pi5"
+          data-c="video"
+          data-t="Neon Requiem"
+          data-s="Music Video · Official"
+          data-ico="🎵"
+        >
+          <div class="pi-tex"></div>
+          <div class="pi-glow"></div>
+          <div class="pi-sym">🎵</div>
+          <div class="pi-badge">Music Video</div>
+          <div class="pi-btn" data-tip="Play">▶</div>
+          <div class="pi-over">
+            <div class="pi-cat">Video · 2026</div>
+            <div class="pi-title">Neon Requiem</div>
+            <div class="pi-sub">Official Music Video</div>
+          </div>
+        </div>
+        <!-- 6 -->
+        <div
+          class="pf-item pi6"
+          data-c="content"
+          data-t="Lotus Dreams"
+          data-s="Travel Series · 2023"
+          data-ico="🌸"
+        >
+          <div class="pi-tex"></div>
+          <div class="pi-glow"></div>
+          <div class="pi-sym">🌸</div>
+          <div class="pi-badge">Travel</div>
+          <div class="pi-btn" data-tip="Open">↗</div>
+          <div class="pi-over">
+            <div class="pi-cat">Content · 2023</div>
+            <div class="pi-title">Lotus Dreams</div>
+            <div class="pi-sub">Travel Visual Series</div>
+          </div>
         </div>
       </div>
     </section>
@@ -2348,8 +2482,56 @@
           );
         "
       >
-        <div class="reel-track" id="reel-track">
-          <!-- Firebase reel clips injected here -->
+        <div class="reel-track">
+          <div class="reel-frame" data-tip="Play Reel">
+            <div class="rf-bg rf1"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Fashion Cut">
+            <div class="rf-bg rf2"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Short Film">
+            <div class="rf-bg rf3"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Music Video">
+            <div class="rf-bg rf4"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Travel Film">
+            <div class="rf-bg rf5"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Brand Film">
+            <div class="rf-bg rf6"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <!-- duplicate for infinite -->
+          <div class="reel-frame" data-tip="Play Reel">
+            <div class="rf-bg rf1"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Fashion Cut">
+            <div class="rf-bg rf2"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Short Film">
+            <div class="rf-bg rf3"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Music Video">
+            <div class="rf-bg rf4"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Travel Film">
+            <div class="rf-bg rf5"></div>
+            <div class="rf-play">▶</div>
+          </div>
+          <div class="reel-frame" data-tip="Brand Film">
+            <div class="rf-bg rf6"></div>
+            <div class="rf-play">▶</div>
+          </div>
         </div>
       </div>
     </section>
@@ -2993,229 +3175,6 @@
         );
         els.forEach((el) => io.observe(el));
       })();
-
-      /* ─── FIREBASE DYNAMIC PORTFOLIO + REEL LOADER ─── */
-      (function firebasePortfolio() {
-        // Guard: only run if Firebase is properly configured
-        if (
-          typeof window.firebaseConfig === "undefined" ||
-          window.firebaseConfig.apiKey === "PASTE_YOUR_API_KEY_HERE"
-        ) {
-          // Firebase not configured — keep hardcoded cards visible
-          console.warn("[Portfolio] Firebase config missing — showing static cards");
-          return;
-        }
-
-        // Get Firestore instance (already initialized by reviews block or init here)
-        let db;
-        try {
-          db = firebase.firestore();
-        } catch (e) {
-          // App already initialized — get existing instance
-          db = firebase.app().firestore();
-        }
-
-        const grid       = document.getElementById("pf-grid");
-        const reelTrack  = document.getElementById("reel-track");
-        const loadingEl  = document.getElementById("pf-loading");
-
-        // ── Category label map ──
-        const catLabels = {
-          fashion:  "Fashion & Editorial",
-          brand:    "Brands & Campaigns",
-          film:     "Music & Short Films",
-          travel:   "Travel & Lifestyle",
-          wedding:  "Weddings & Events",
-          abstract: "Abstract & Artistic",
-          photo:    "Photography",
-          video:    "Video",
-          content:  "Content",
-        };
-
-        // ── Icon map per category ──
-        const catIcons = {
-          fashion: "👑", brand: "⚡", film: "🎬",
-          travel: "🌅", wedding: "💍", abstract: "🌀",
-          photo: "📷", video: "🎵", content: "✨",
-        };
-
-        // ── Gradient class cycle ──
-        const gradClasses = ["pi1","pi2","pi3","pi4","pi5","pi6","pi7","pi8","pi9"];
-
-        // ── Build one portfolio card ──
-        function makeCard(item, idx) {
-          const cat      = item.cat || "photo";
-          const icon     = catIcons[cat]  || "✦";
-          const label    = catLabels[cat] || cat;
-          const gradCls  = gradClasses[idx % gradClasses.length];
-          const isVideo  = item.type === "video";
-          const sizeClass = idx === 0 ? "w2" : (idx === 1 ? "h2" : "");
-
-          const card = document.createElement("div");
-          card.className = \`pf-item \${sizeClass} \${gradCls}\`;
-          card.dataset.c = cat;
-          card.dataset.t = item.title || "Untitled";
-          card.dataset.s = item.sub   || label;
-          card.dataset.ico = icon;
-          card.dataset.url = item.url || "";
-          card.dataset.type = item.type || "image";
-
-          card.innerHTML = \`
-            <div class="pi-tex"></div>
-            <div class="pi-glow"></div>
-            \${item.url
-              ? (isVideo
-                  ? \`<video src="\${item.url}" class="pi-media-bg" muted loop autoplay playsinline
-                       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;z-index:1"></video>\`
-                  : \`<img src="\${item.url}" alt="\${item.title}" loading="lazy"
-                       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.62;z-index:1;filter:saturate(0.75) brightness(0.72) hue-rotate(260deg)">\`)
-              : \`<div class="pi-sym">\${icon}</div>\`
-            }
-            <div class="pi-badge">\${label}</div>
-            <div class="pi-btn" data-tip="\${isVideo ? 'Play' : 'Open'}">\${isVideo ? "▶" : "↗"}</div>
-            <div class="pi-over">
-              <div class="pi-cat">\${label} · \${item.year || "2026"}</div>
-              <div class="pi-title">\${item.title || "Untitled"}</div>
-              <div class="pi-sub">\${item.sub || ""}</div>
-            </div>\`;
-
-          // 3D tilt on desktop
-          if (!("ontouchstart" in window)) {
-            card.addEventListener("mousemove", (e) => {
-              const r = card.getBoundingClientRect();
-              const x = (e.clientX - r.left) / r.width  - 0.5;
-              const y = (e.clientY - r.top)  / r.height - 0.5;
-              card.style.transform = \`perspective(1200px) rotateY(\${x*14}deg) rotateX(\${-y*9}deg) scale(1.04) translateZ(28px)\`;
-            });
-            card.addEventListener("mouseleave", () => card.style.transform = "");
-          }
-
-          // Click → lightbox
-          card.addEventListener("click", () => {
-            const lb = document.getElementById("lb");
-            if (!lb) return;
-            document.getElementById("lb-ico").textContent = icon;
-            document.getElementById("lb-tit").textContent = item.title || "";
-            document.getElementById("lb-sub").textContent = item.sub   || "";
-            // Show actual image/video in lightbox
-            const lbv = document.getElementById("lb-v") || document.getElementById("lbv");
-            if (lbv && item.url) {
-              if (isVideo) {
-                lbv.innerHTML = \`<video src="\${item.url}" controls autoplay style="max-width:100%;max-height:65vh;border:1px solid rgba(229,181,103,.2)"></video>\`;
-              } else {
-                lbv.innerHTML = \`<img src="\${item.url}" alt="\${item.title}" style="max-width:100%;max-height:65vh;object-fit:contain;border:1px solid rgba(229,181,103,.2)">\`;
-              }
-            }
-            lb.classList.add("open");
-          });
-
-          return card;
-        }
-
-        // ── Build one reel frame ──
-        function makeReelFrame(item) {
-          const frame = document.createElement("div");
-          frame.className = "reel-frame";
-          frame.dataset.tip = item.title || "Play";
-          frame.style.cursor = "pointer";
-
-          if (item.url && item.type === "video") {
-            frame.innerHTML = \`
-              <video src="\${item.url}" class="rf-bg" muted loop
-                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.7"
-                playsinline></video>
-              <div class="rf-play">▶</div>\`;
-            frame.addEventListener("mouseenter", () => frame.querySelector("video")?.play());
-            frame.addEventListener("mouseleave", () => frame.querySelector("video")?.pause());
-          } else if (item.url && item.type === "image") {
-            frame.innerHTML = \`
-              <img src="\${item.url}" alt="\${item.title}"
-                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.7;filter:hue-rotate(260deg) saturate(1.4)">
-              <div class="rf-play">▶</div>\`;
-          } else {
-            const gradIdx = Math.floor(Math.random() * 6) + 1;
-            frame.innerHTML = \`<div class="rf-bg rf\${gradIdx}"></div><div class="rf-play">▶</div>\`;
-          }
-          return frame;
-        }
-
-        // ── Load portfolio from Firestore ──
-        db.collection("portfolio")
-          .orderBy("createdAt", "desc")
-          .onSnapshot((snap) => {
-            if (!grid) return;
-            // Remove loading placeholder
-            if (loadingEl) loadingEl.remove();
-
-            // Remove old dynamic cards (keep static ones if any)
-            grid.querySelectorAll(".pf-firebase").forEach(el => el.remove());
-
-            if (snap.empty) {
-              // No uploads yet — show placeholder message
-              const empty = document.createElement("div");
-              empty.className = "pf-firebase";
-              empty.style.cssText = "grid-column:1/-1;text-align:center;padding:4rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:rgba(229,181,103,.35);letter-spacing:.1em";
-              empty.textContent = "✦  Portfolio coming soon  ✦";
-              grid.appendChild(empty);
-              return;
-            }
-
-            let idx = 0;
-            snap.docs.forEach((doc) => {
-              const card = makeCard({ id: doc.id, ...doc.data() }, idx);
-              card.classList.add("pf-firebase");
-              card.style.animation = \`fadeUp .7s cubic-bezier(.16,1,.3,1) \${idx * 0.08}s both\`;
-              grid.appendChild(card);
-              idx++;
-            });
-
-            // Re-run filter if one is active
-            const activeFilter = document.querySelector(".ft.on");
-            if (activeFilter && activeFilter.dataset.f !== "all") {
-              const f = activeFilter.dataset.f;
-              grid.querySelectorAll(".pf-item").forEach(item => {
-                const show = item.dataset.c === f;
-                item.style.opacity = show ? "1" : ".18";
-                item.style.pointerEvents = show ? "auto" : "none";
-              });
-            }
-          }, (err) => {
-            console.error("[Portfolio] Firestore error:", err);
-          });
-
-        // ── Load reel strip from Firestore ──
-        db.collection("reel")
-          .orderBy("createdAt", "desc")
-          .onSnapshot((snap) => {
-            if (!reelTrack) return;
-            reelTrack.innerHTML = "";
-
-            if (snap.empty) {
-              // Keep static gradient frames as fallback
-              for (let i = 1; i <= 6; i++) {
-                const frame = document.createElement("div");
-                frame.className = "reel-frame";
-                frame.innerHTML = \`<div class="rf-bg rf\${i}"></div><div class="rf-play">▶</div>\`;
-                reelTrack.appendChild(frame);
-              }
-              // Duplicate for infinite scroll
-              for (let i = 1; i <= 6; i++) {
-                const frame = document.createElement("div");
-                frame.className = "reel-frame";
-                frame.innerHTML = \`<div class="rf-bg rf\${i}"></div><div class="rf-play">▶</div>\`;
-                reelTrack.appendChild(frame);
-              }
-              return;
-            }
-
-            const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            // Render twice for infinite scroll loop
-            [...items, ...items].forEach(item => {
-              reelTrack.appendChild(makeReelFrame(item));
-            });
-          });
-
-      })(); /* end firebasePortfolio */
 
       /* ─── 14. PORTFOLIO FILTER ─── */
       (function filter() {
