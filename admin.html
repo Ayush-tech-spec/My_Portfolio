@@ -1054,7 +1054,14 @@ window.filterMedia = function(filter, btn) {
    REVIEWS
 ══════════════════════════════════════ */
 function loadReviews() {
-  db.collection('reviews').orderBy('createdAt','desc').onSnapshot(snap => {
+  // Try ordering by createdAt first, fall back to ts
+    const reviewsQuery = db.collection('reviews');
+    reviewsQuery.get().then(testSnap => {
+      // Check which timestamp field exists
+      const sampleField = testSnap.docs[0]?.data();
+      const orderField  = sampleField?.createdAt ? 'createdAt' : 'ts';
+      // Now subscribe with correct field
+      reviewsQuery.orderBy(orderField,'desc').onSnapshot(snap => {
     const list = document.getElementById('reviews-list');
     if (!snap.size) {
       list.innerHTML = `<div class="empty-state"><span>⭐</span>No reviews yet</div>`;
@@ -1064,9 +1071,13 @@ function loadReviews() {
     snap.docs.forEach(doc => {
       const r = doc.data();
       const stars = '★'.repeat(r.rating||5) + '☆'.repeat(5-(r.rating||5));
-      const date  = r.createdAt?.toDate
-        ? r.createdAt.toDate().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
-        : 'Recently';
+      // Handle both Firestore Timestamp (createdAt) and JS Date.now() number (ts)
+      let date = 'Recently';
+      if (r.createdAt?.toDate) {
+        date = r.createdAt.toDate().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+      } else if (r.ts) {
+        date = new Date(r.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+      }
       const card = document.createElement('div');
       card.style.cssText = `background:var(--card);border:1px solid var(--bd);padding:1.4rem 1.6rem;
         margin-bottom:.8rem;border-radius:2px;display:flex;align-items:flex-start;gap:1.2rem;`;
@@ -1085,7 +1096,10 @@ function loadReviews() {
   });
 }
 
-window.deleteReview = function(id) {
+  }); // close onSnapshot
+    }).catch(e => console.warn('Reviews order field check:', e));
+
+  window.deleteReview = function(id) {
   if (!confirm('Delete this review?')) return;
   db.collection('reviews').doc(id).delete()
     .then(() => toast('Review deleted', 'ok'))

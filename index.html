@@ -1988,49 +1988,30 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
-    <!-- ARROW FIX — injected override -->
-    <style>
-      /* Force arrow visible on hover — overrides all previous rules */
-      .pi-btn {
-        position: absolute !important;
-        top: 1rem !important;
-        right: 1rem !important;
-        z-index: 999 !important;
-        width: 36px !important;
-        height: 36px !important;
-        border-radius: 50% !important;
-        border: 1.5px solid #ffd700 !important;
-        background: rgba(8, 0, 15, 0.82) !important;
-        backdrop-filter: blur(6px) !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 16px !important;
-        color: #ffd700 !important;
-        font-weight: 700 !important;
-        opacity: 0 !important;
-        /* translateY instead of scale — scale gets clipped by overflow:hidden */
-        transform: translateY(-10px) !important;
-        transition:
-          opacity 0.28s ease,
-          transform 0.28s ease !important;
-        pointer-events: none !important;
-      }
-      .pf-item:hover .pi-btn {
-        opacity: 1 !important;
-        transform: translateY(0px) !important;
-      }
-      /* Badge also needs to be above the overlay */
-      .pi-badge {
-        z-index: 999 !important;
-      }
-      /* pf-item: keep overflow:hidden but give it isolation context */
-      .pf-item {
-        isolation: isolate !important;
-      }
-    </style>
-  </head>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  
+  <style>
+    .pi-btn {
+      position: absolute !important;
+      top: 1rem !important; right: 1rem !important;
+      z-index: 999 !important;
+      width: 36px !important; height: 36px !important;
+      border-radius: 50% !important;
+      border: 1.5px solid #FFD700 !important;
+      background: rgba(8,0,15,0.82) !important;
+      backdrop-filter: blur(6px) !important;
+      display: flex !important;
+      align-items: center !important; justify-content: center !important;
+      font-size: 16px !important; color: #FFD700 !important;
+      font-weight: 700 !important; opacity: 0 !important;
+      transform: translateY(-10px) !important;
+      transition: opacity 0.28s ease, transform 0.28s ease !important;
+    }
+    .pf-item:hover .pi-btn { opacity: 1 !important; transform: translateY(0) !important; }
+    .pi-badge { z-index: 999 !important; }
+    .pf-item { isolation: isolate !important; }
+  </style>
+</head>
   <body>
     <!-- ── SCROLL PROGRESS ── -->
     <div id="progress-bar"></div>
@@ -3237,13 +3218,64 @@
       /* ─── 17. CONTACT FORM ─── */
       window.handleForm = function (e) {
         e.preventDefault();
-        const btn = e.target.querySelector(".f-btn");
-        btn.textContent = "Sending...";
+        const btn  = e.target.querySelector(".f-btn");
+        const form = e.target;
+        const name    = form.querySelector('[placeholder="Enter your name"]')?.value?.trim();
+        const email   = form.querySelector('[type="email"]')?.value?.trim();
+        const project = form.querySelector('[placeholder*="Photography"]')?.value?.trim();
+        const vision  = form.querySelector('textarea')?.value?.trim();
+
+        if (!name || !email || !vision) {
+          alert("Please fill in your name, email and vision.");
+          return;
+        }
+
+        btn.textContent = "Sending ✦";
         btn.disabled = true;
-        setTimeout(() => {
+
+        // ── Save inquiry to Firestore so admin can see it ──
+        let db;
+        try { db = firebase.firestore(); } catch(e2) { db = firebase.app().firestore(); }
+
+        db.collection("inquiries").add({
+          name, email,
+          project: project || "Not specified",
+          vision,
+          ts: firebase.firestore.FieldValue.serverTimestamp(),
+          read: false
+        })
+        .then(() => {
+          // ── Also open mailto as fallback so email arrives directly ──
+          const subject = encodeURIComponent("New Project Inquiry from " + name);
+          const body    = encodeURIComponent(
+            "Name: " + name + "\n" +
+            "Email: " + email + "\n" +
+            "Project Type: " + (project || "Not specified") + "\n\n" +
+            "Vision:\n" + vision
+          );
+          // Silent mailto open in background
+          const a = document.createElement("a");
+          a.href = "mailto:ayushbharadwaj832108@gmail.com?subject=" + subject + "&body=" + body;
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          // Show success
           btn.style.display = "none";
-          $("#f-ok").style.display = "block";
-        }, 1200);
+          const ok = $("#f-ok");
+          if (ok) {
+            ok.textContent = "✦ Message sent! Check your email — Ayush will respond within 24 hours.";
+            ok.style.display = "block";
+          }
+          form.reset();
+        })
+        .catch((err) => {
+          console.error("Contact form error:", err);
+          btn.disabled = false;
+          btn.textContent = "Send into the Realm →";
+          alert("Couldn't send right now. Please email directly: ayushbharadwaj832108@gmail.com");
+        });
       };
 
       /* ─── 17b. CLIENT REVIEWS (live, Firebase Firestore-backed) ───
@@ -3526,6 +3558,76 @@
           });
         });
       })();
-    </script>
+    
+
+      /* ── ABOUT SECTION SYNC from Firestore settings/about ── */
+      (function aboutSync() {
+        var db2;
+        try { db2 = firebase.firestore(); } catch(e) { return; }
+        db2.collection("settings").doc("about").onSnapshot(function(doc) {
+          if (!doc.exists) return;
+          var d = doc.data();
+          if (d.name) {
+            var h = document.querySelector(".h-name");
+            if (h) { var p=d.name.split(" "); h.innerHTML=p[0]+"<br>"+p.slice(1).join(" "); }
+            var fl=document.querySelector(".f-logo");
+            if (fl) fl.textContent=d.name+" · Visual Realm";
+          }
+          if (d.tag) { var t=document.querySelector(".h-tag"); if(t) t.textContent=d.tag; }
+          if (d.bio) { var b=document.querySelector(".ab-body"); if(b) b.textContent=d.bio; }
+          if (d.loc) {
+            var pl=document.querySelector(".portrait-label");
+            if(pl) pl.textContent=(d.name||"Ayush Bharadwaj")+" · "+d.loc;
+            var fc=document.querySelector(".f-copy");
+            if(fc) fc.textContent=d.loc+" · Crafted with obsession";
+          }
+          if (d.years) {
+            document.querySelectorAll("[data-count]").forEach(function(el) {
+              var v=+el.dataset.count;
+              if(v>=4 && v<=10) { el.textContent=d.years; el.dataset.count=d.years; }
+            });
+            document.querySelectorAll("[data-target]").forEach(function(el) {
+              var v=+el.dataset.target;
+              if(v>=4 && v<=10) { el.textContent=d.years; el.dataset.target=d.years; }
+            });
+          }
+          if (d.photoURL) {
+            var img=document.querySelector(".ab-portrait img");
+            if(img) img.src=d.photoURL;
+          }
+        }, function(err){ console.warn("[About]",err.message); });
+      })();
+
+      /* ── CONTACT FORM — saves to Firestore + opens mailto ── */
+      window.handleForm = function(e) {
+        e.preventDefault();
+        var form=e.target, name="", email="", project="", vision="";
+        form.querySelectorAll("input,textarea,select").forEach(function(el) {
+          if (el.type==="email")           email  =el.value.trim();
+          else if (el.tagName==="TEXTAREA") vision =el.value.trim();
+          else if (!name && el.type==="text") name =el.value.trim();
+          else if (el.type==="text")        project=el.value.trim();
+        });
+        if (!name||!email||!vision) { alert("Please fill name, email and vision."); return; }
+        var btn=form.querySelector(".f-btn");
+        btn.textContent="Sending ✦"; btn.disabled=true;
+        function done() {
+          btn.style.display="none";
+          var ok=document.getElementById("f-ok");
+          if(ok){ ok.textContent="✦ Message sent! Ayush will respond within 24 hours."; ok.style.display="block"; }
+          form.reset();
+          /* open mail client */
+          var s=encodeURIComponent("Project Inquiry from "+name);
+          var b=encodeURIComponent("Name: "+name+"\nEmail: "+email+"\nProject: "+(project||"N/A")+"\n\nVision:\n"+vision);
+          window.open("mailto:ayushbharadwaj832108@gmail.com?subject="+s+"&body="+b,"_blank");
+        }
+        try {
+          firebase.firestore().collection("inquiries").add({
+            name:name, email:email, project:project||"N/A", vision:vision,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(), read:false
+          }).then(done).catch(done);
+        } catch(err) { done(); }
+      };
+</script>
   </body>
 </html>
