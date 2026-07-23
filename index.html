@@ -1257,6 +1257,50 @@
         opacity: 1;
         transform: scale(1);
       }
+      .pi-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+      }
+      .pi-photo + .pi-tex {
+        opacity: 0.35;
+      }
+      .rf-photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #rv-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 20000;
+        background: rgba(8, 0, 15, 0.92);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 4vw;
+      }
+      #rv-modal.open {
+        display: flex;
+      }
+      #rv-modal video {
+        max-width: 90vw;
+        max-height: 85vh;
+        border: 1px solid rgba(229, 181, 103, 0.35);
+      }
+      #rv-modal .rv-close {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        color: var(--g2);
+        font-size: 26px;
+        cursor: pointer;
+      }
 
       /* ─────────────────────────────────────────
    REEL / VIDEO STRIP
@@ -2849,6 +2893,12 @@
       </div>
     </div>
 
+    <!-- ── VIDEO MODAL (reel / portfolio video playback) ── -->
+    <div id="rv-modal">
+      <span class="rv-close" onclick="closeRv()">✕</span>
+      <video id="rv-video" controls playsinline></video>
+    </div>
+
     <!-- ══════════════════════════════════════
      JAVASCRIPT — ALL LIVE ELEMENTS
 ══════════════════════════════════════ -->
@@ -3627,6 +3677,136 @@
             createdAt: firebase.firestore.FieldValue.serverTimestamp(), read:false
           }).then(done).catch(done);
         } catch(err) { done(); }
+      };
+
+      /* ── DYNAMIC PORTFOLIO + REEL SYNC ──
+         Renders live from Firestore ("portfolio" / "reels" collections)
+         whenever content managed through admin.html exists. Falls back
+         to the static markup above when those collections are empty,
+         so the page never breaks before you've added anything. */
+      (function dynamicGallerySync() {
+        var db3;
+        try { db3 = firebase.firestore(); } catch (e) { return; }
+
+        function initPfInteractions() {
+          if (!("ontouchstart" in window)) {
+            $$(".pf-item").forEach(function (card) {
+              card.addEventListener("mousemove", function (e) {
+                var r = card.getBoundingClientRect();
+                var x = (e.clientX - r.left) / r.width - 0.5;
+                var y = (e.clientY - r.top) / r.height - 0.5;
+                card.style.transform =
+                  "perspective(1200px) rotateY(" + x * 14 + "deg) rotateX(" +
+                  -y * 9 + "deg) scale(1.04) translateZ(28px)";
+              });
+              card.addEventListener("mouseleave", function () {
+                card.style.transform =
+                  "perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1) translateZ(0)";
+              });
+            });
+          }
+          $$(".pf-item").forEach(function (item) {
+            item.addEventListener("click", function () {
+              var vurl = item.dataset.video;
+              if (vurl) { window.openRv(vurl); return; }
+              $("#lb-ico").textContent = item.dataset.ico || "✦";
+              $("#lb-title").textContent = item.dataset.t || "";
+              $("#lb-sub").textContent = item.dataset.s || "";
+              var cls = Array.prototype.find.call(item.classList, function (c) {
+                return /^pi\d/.test(c);
+              });
+              var lb = $("#lb-vis");
+              lb.className = "lb-vis " + (cls || "");
+              if (item.dataset.img) {
+                lb.style.backgroundImage = "url('" + item.dataset.img + "')";
+                lb.style.backgroundSize = "cover";
+                lb.style.backgroundPosition = "center";
+              } else {
+                lb.style.backgroundImage = "";
+              }
+              $("#lb").classList.add("open");
+            });
+          });
+        }
+
+        function renderPortfolio(docs) {
+          if (!docs.length) return;
+          var grid = document.getElementById("pf-grid");
+          if (!grid) return;
+          grid.innerHTML = "";
+          docs.forEach(function (d, i) {
+            var n = (i % 6) + 1;
+            var sizeCls = d.size === "wide" ? "w2" : d.size === "tall" ? "h2" : "";
+            var el = document.createElement("div");
+            el.className = ("pf-item " + sizeCls + " pi" + n).trim();
+            el.dataset.c = d.category || "photo";
+            el.dataset.t = d.title || "";
+            el.dataset.s = d.subtitle || "";
+            el.dataset.ico = d.icon || "✦";
+            if (d.imageURL) el.dataset.img = d.imageURL;
+            if (d.videoURL) el.dataset.video = d.videoURL;
+            el.innerHTML =
+              (d.imageURL ? '<img class="pi-photo" src="' + d.imageURL + '" alt="">' : "") +
+              '<div class="pi-tex"></div>' +
+              '<div class="pi-glow"></div>' +
+              (d.imageURL ? "" : '<div class="pi-sym">' + (d.icon || "✦") + "</div>") +
+              '<div class="pi-badge">' + (d.badge || d.category || "") + "</div>" +
+              '<div class="pi-btn" data-tip="' + (d.videoURL ? "Play" : "Open") + '">' +
+              (d.videoURL ? "▶" : "↗") + "</div>" +
+              '<div class="pi-over">' +
+              '<div class="pi-cat">' + (d.category || "Photography") +
+              (d.year ? " · " + d.year : "") + "</div>" +
+              '<div class="pi-title">' + (d.title || "") + "</div>" +
+              '<div class="pi-sub">' + (d.subtitle || "") + "</div>" +
+              "</div>";
+            grid.appendChild(el);
+          });
+          initPfInteractions();
+        }
+
+        function renderReel(docs) {
+          if (!docs.length) return;
+          var track = document.querySelector(".reel-track");
+          if (!track) return;
+          track.innerHTML = "";
+          docs.concat(docs).forEach(function (d) {
+            var el = document.createElement("div");
+            el.className = "reel-frame";
+            el.setAttribute("data-tip", d.label || "Play");
+            el.innerHTML =
+              (d.thumbURL
+                ? '<img class="rf-photo" src="' + d.thumbURL + '" alt="">'
+                : '<div class="rf-bg rf' + (((Math.random() * 6) | 0) + 1) + '"></div>') +
+              '<div class="rf-play">▶</div>';
+            if (d.videoURL) {
+              el.style.cursor = "pointer";
+              el.addEventListener("click", function () { window.openRv(d.videoURL); });
+            }
+            track.appendChild(el);
+          });
+        }
+
+        db3.collection("portfolio").orderBy("order", "asc").onSnapshot(
+          function (snap) { renderPortfolio(snap.docs.map(function (d) { return d.data(); })); },
+          function (err) { console.warn("[Portfolio sync]", err.message); }
+        );
+        db3.collection("reels").orderBy("order", "asc").onSnapshot(
+          function (snap) { renderReel(snap.docs.map(function (d) { return d.data(); })); },
+          function (err) { console.warn("[Reel sync]", err.message); }
+        );
+      })();
+
+      window.openRv = function (url) {
+        var v = document.getElementById("rv-video");
+        v.src = url;
+        document.getElementById("rv-modal").classList.add("open");
+        v.play().catch(function () {});
+      };
+      window.closeRv = function () {
+        var v = document.getElementById("rv-video");
+        v.pause();
+        v.removeAttribute("src");
+        document.getElementById("rv-modal").classList.remove("open");
       };
 </script>
   </body>
